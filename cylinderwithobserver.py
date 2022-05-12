@@ -6,6 +6,7 @@ import vtkmodules.vtkInteractionStyle
 import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkFiltersSources import vtkCylinderSource
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleUser
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -13,6 +14,22 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindowInteractor,
     vtkRenderer
 )
+
+
+class MyInteractorStyle(vtkInteractorStyleUser):
+
+    def __init__(self, source, parent=None):
+        self.AddObserver('KeyPressEvent', self.key_press_event)
+        self.source = source
+
+    def key_press_event(self, obj, event):
+        if chr(obj.GetChar()) == 'u':
+            print("key pressed is u")
+        return
+
+
+def my_callback(obj, string):
+    print("Starting a render : key -> ", string)
 
 
 def main():
@@ -40,7 +57,6 @@ def main():
     cylinder_actor.GetProperty().SetColor(colors.GetColor3d("Orange"))
     cylinder_actor.RotateX(40.0)
     cylinder_actor.RotateY(-20.0)
-    cylinder_actor.RotateZ(-30.0)
 
     # graphics structure. The renderer renders into the render window
     # The render window interactor captures mouse events and will per
@@ -57,6 +73,8 @@ def main():
     renderer.SetBackground(colors.GetColor3d("BkgColor"))
     renderer_window.SetSize(800, 800)
     renderer_window.SetWindowName("Cylinder example")
+
+    interactor_renderer.SetInteractorStyle(MyInteractorStyle(cylinder))
 
     # this allows the interactor to initialize itself. It has
     # to be called before the event loop
