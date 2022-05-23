@@ -20,11 +20,65 @@ class MyInteractorStyle(vtkInteractorStyleUser):
 
     def __init__(self, source, parent=None):
         self.AddObserver('KeyPressEvent', self.key_press_event)
+        # left mouse button press
+        self.AddObserver('LeftButtonPressEvent', self.left_button_press_event)
+        # left mouse button release
+        self.AddObserver('LeftButtonReleaseEvent',
+                         self.left_button_release_event)
+        # right mouse button press
+        self.AddObserver('RightButtonPressEvent',
+                         self.right_button_press_event)
+        # right mouse button release
+        self.AddObserver('RightButtonReleaseEvent',
+                         self.right_button_release_event)
+        # middle mouse button press
+        self.AddObserver('MiddleButtonPressEvent',
+                         self.middle_button_press_event)
+        # middle mouse button release
+        self.AddObserver('MiddleButtonReleaseEvent',
+                         self.middle_button_release_event)
+        # mouse move
+        self.AddObserver('MouseMoveEvent', self.mouse_move_event)
         self.source = source
 
     def key_press_event(self, obj, event):
         if chr(obj.GetChar()) == 'u':
             print("key pressed is u")
+        elif chr(obj.GetChar()) == 'e':
+            # exit the application
+            print("key pressed is e")
+            exit(0)
+        return
+
+    def left_button_press_event(self, obj, event):
+        print("left button pressed")
+        return
+
+    def left_button_release_event(self, obj, event):
+        print("left button released")
+        return
+
+    def right_button_press_event(self, obj, event):
+        print("right button pressed")
+        return
+
+    def right_button_release_event(self, obj, event):
+        print("right button released")
+        return
+
+    def middle_button_press_event(self, obj, event):
+        print("middle button pressed")
+        return
+
+    def middle_button_release_event(self, obj, event):
+        print("middle button released")
+        return
+
+    def mouse_move_event(self, obj, event):
+        # print event
+        last_pos = obj.GetLastPos()
+        old_pos = obj.GetOldPos()
+        print("mouse move: last_pos: {}, old_pos: {}".format(last_pos, old_pos))
         return
 
 
@@ -68,7 +122,7 @@ def main():
     renderer.AddActor(cylinder_actor)
     renderer.SetBackground(colors.GetColor3d("BkgColor"))
     renderer_window.SetSize(800, 800)
-    renderer_window.SetWindowName("Cylinder example")
+    renderer_window.SetWindowName("Mouse Events")
 
     interactor_renderer.SetInteractorStyle(MyInteractorStyle(cylinder))
 

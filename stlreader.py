@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-# pipeline creation and rendering for cylinder
-
 import vtkmodules.vtkInteractionStyle
 import vtkmodules.vtkRenderingOpenGL2
+from vtkmodules.vtkIOGeometry import vtkSTLReader
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkFiltersSources import vtkCylinderSource
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleUser
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -16,43 +13,46 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 
-class MyInteractorStyle(vtkInteractorStyleUser):
-
-    def __init__(self, source, parent=None):
-        self.AddObserver('KeyPressEvent', self.key_press_event)
-        self.source = source
-
-    def key_press_event(self, obj, event):
-        if chr(obj.GetChar()) == 'u':
-            print("key pressed is u")
-        return
+def get_program_parameters():
+    import argparse
+    description = 'Read a .stl file.'
+    epilogue = ''''''
+    parser = argparse.ArgumentParser(description=description, epilog=epilogue,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('filename', help='42400-IDGH.stl')
+    args = parser.parse_args()
+    return args.filename
 
 
 def main():
+
+    filename = get_program_parameters()
+
     colors = vtkNamedColors()
 
     # set the bg color
     bg = map(lambda x: x / 255.0, [26, 51, 0, 255])
     colors.SetColor("BkgColor", *bg)
 
-    # polygonal cylinder model with eight circumferential facets
-    cylinder = vtkCylinderSource()
-    cylinder.SetResolution(8)
+    # read STL file
+    reader = vtkSTLReader()
+    reader.SetFileName(filename)
 
     # mapper is responsible for pushing the geometry into
     # the graphics library. It may also do color mapping, if scalars or
     # other attributes are defined
-    cylinder_mapper = vtkPolyDataMapper()
-    cylinder_mapper.SetInputConnection(cylinder.GetOutputPort())
+    geometry_mapper = vtkPolyDataMapper()
+    geometry_mapper.SetInputConnection(reader.GetOutputPort())
 
     # this actor is a grouping mechanism: besides the geometry (mapper)
     # it also has a property, transformation matrix, and/or texture map.
     # Here we set its color and rotate it 22.5 degrees
-    cylinder_actor = vtkActor()
-    cylinder_actor.SetMapper(cylinder_mapper)
-    cylinder_actor.GetProperty().SetColor(colors.GetColor3d("Orange"))
-    cylinder_actor.RotateX(40.0)
-    cylinder_actor.RotateY(-20.0)
+    stl_actor = vtkActor()
+    stl_actor.SetMapper(geometry_mapper)
+    stl_actor.GetProperty().SetColor(colors.GetColor3d("Orange"))
+    stl_actor.RotateX(40.0)
+    stl_actor.RotateY(-20.0)
+    stl_actor.RotateZ(-30.0)
 
     # graphics structure. The renderer renders into the render window
     # The render window interactor captures mouse events and will per
@@ -65,12 +65,10 @@ def main():
     interactor_renderer.SetRenderWindow(renderer_window)
 
     # Add the actor to the renderer, set the bg and size
-    renderer.AddActor(cylinder_actor)
+    renderer.AddActor(stl_actor)
     renderer.SetBackground(colors.GetColor3d("BkgColor"))
     renderer_window.SetSize(800, 800)
-    renderer_window.SetWindowName("Cylinder example")
-
-    interactor_renderer.SetInteractorStyle(MyInteractorStyle(cylinder))
+    renderer_window.SetWindowName("Stereo lithography example")
 
     # this allows the interactor to initialize itself. It has
     # to be called before the event loop
