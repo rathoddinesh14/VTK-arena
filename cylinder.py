@@ -24,7 +24,11 @@ def main():
 
     # polygonal cylinder model with eight circumferential facets
     cylinder = vtkCylinderSource()
-    cylinder.SetResolution(8)
+    cylinder.SetResolution(50)
+    cylinder.SetRadius(59)
+    cylinder.SetHeight(129.5)
+    # center
+    cylinder.SetCenter(0.0, 0.0, 0.0)
 
     # mapper is responsible for pushing the geometry into
     # the graphics library. It may also do color mapping, if scalars or
