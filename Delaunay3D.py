@@ -7,11 +7,20 @@ import vtk
 # The points to be triangulated are generated randomly in the unit
 # cube located at the origin. The points are then associated with a
 # vtkPolyData.
-math = vtk.vtkMath()
-points = vtk.vtkPoints()
-for i in range(0, 25):
-    points.InsertPoint(i, math.Random(0, 1), math.Random(0, 1),
-                       math.Random(0, 1))
+# math = vtk.vtkMath()
+# points = vtk.vtkPoints()
+# for i in range(0, 25):
+#     points.InsertPoint(i, math.Random(0, 1), math.Random(0, 1),
+#                        math.Random(0, 1))
+
+# read the vtp file
+reader = vtk.vtkXMLPolyDataReader()
+reader.SetFileName("/Users/rathod_ias/Documents/GitHub/compositum-3d-visualization/singlegrain.vtp")
+reader.Update()
+
+# get the points
+points = reader.GetOutput().GetPoints()
+
 
 profile = vtk.vtkPolyData()
 profile.SetPoints(points)
@@ -28,12 +37,22 @@ delny.SetAlpha(1)
 delny.BoundingTriangulationOff()
 
 # Shrink the result to help see it better.
-shrink = vtk.vtkShrinkFilter()
-shrink.SetInputConnection(delny.GetOutputPort())
-shrink.SetShrinkFactor(0.9)
+# shrink = vtk.vtkShrinkFilter()
+# shrink.SetInputConnection(delny.GetOutputPort())
+# shrink.SetShrinkFactor(1)
+
+# extract the surface
+extract = vtk.vtkDataSetSurfaceFilter()
+extract.SetInputConnection(delny.GetOutputPort())
+
+# smooth the surface
+smooth = vtk.vtkSmoothPolyDataFilter()
+smooth.SetInputConnection(extract.GetOutputPort())
+smooth.SetNumberOfIterations(200)
+smooth.Update()
 
 map = vtk.vtkDataSetMapper()
-map.SetInputConnection(shrink.GetOutputPort())
+map.SetInputConnection(smooth.GetOutputPort())
 
 triangulation = vtk.vtkActor()
 triangulation.SetMapper(map)
@@ -49,7 +68,7 @@ iren.SetRenderWindow(renWin)
 # Add the actors to the renderer, set the background and size
 ren.AddActor(triangulation)
 ren.SetBackground(1, 1, 1)
-renWin.SetSize(250, 250)
+renWin.SetSize(900, 900)
 renWin.Render()
 
 cam1 = ren.GetActiveCamera()

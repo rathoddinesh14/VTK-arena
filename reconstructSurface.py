@@ -9,19 +9,36 @@
 import os
 import string
 import vtk
+import math
 
 
 points = vtk.vtkPoints()
 
-file = open("cactus.3337.pts", "r")
-
-line = file.readline()
-while line:
-    data = line.split()
-    if data and data[0] == 'p':
-        x, y, z = float(data[1]), float(data[2]), float(data[3])
+# create the surface of sphere of radius 1
+for theta in range(0, 360):
+    for phi in range(0, 360):
+        x = 1.0 * math.sin(math.radians(theta)) * math.cos(math.radians(phi))
+        y = 1.0 * math.sin(math.radians(theta)) * math.sin(math.radians(phi))
+        z = 1.0 * math.cos(math.radians(theta))
         points.InsertNextPoint(x, y, z)
-    line = file.readline()
+
+# file = open("cactus.3337.pts", "r")
+
+# line = file.readline()
+# while line:
+#     data = line.split()
+#     if data and data[0] == 'p':
+#         x, y, z = float(data[1]), float(data[2]), float(data[3])
+#         points.InsertNextPoint(x, y, z)
+#     line = file.readline()
+
+# read the vtp file
+# reader = vtk.vtkXMLPolyDataReader()
+# reader.SetFileName("/Users/rathod_ias/Documents/GitHub/compositum-3d-visualization/grain_boundary.vtp")
+# reader.Update()
+
+# # get the points
+# points = reader.GetOutput().GetPoints()
 
 # polyData
 polyData = vtk.vtkPolyData()
@@ -45,8 +62,12 @@ reverse.SetInputConnection(cf.GetOutputPort())
 reverse.ReverseCellsOn()
 reverse.ReverseNormalsOn()
 
+# remove the extra surface cells
+stripper = vtk.vtkStripper()
+stripper.SetInputConnection(reverse.GetOutputPort())
+
 map = vtk.vtkPolyDataMapper()
-map.SetInputConnection(reverse.GetOutputPort())
+map.SetInputConnection(stripper.GetOutputPort())
 map.ScalarVisibilityOff()
 
 surfaceActor = vtk.vtkActor()
@@ -66,7 +87,7 @@ iren.SetRenderWindow(renWin)
 # Add the actors to the renderer, set the background and size
 ren.AddActor(surfaceActor)
 ren.SetBackground(1, 1, 1)
-renWin.SetSize(400, 400)
+renWin.SetSize(900, 900)
 ren.GetActiveCamera().SetFocalPoint(0, 0, 0)
 ren.GetActiveCamera().SetPosition(1, 0, 0)
 ren.GetActiveCamera().SetViewUp(0, 0, 1)
