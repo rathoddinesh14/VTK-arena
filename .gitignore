@@ -1,0 +1,10 @@
+*.off
+*.stl
+*.vtp
+*.mat
+*.mhd
+*.raw
+*.vtk
+__pycache__
+.vscode
+.idea
