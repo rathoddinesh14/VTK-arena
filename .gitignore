@@ -8,3 +8,6 @@
 __pycache__
 .vscode
 .idea
+*.pts
+*.pdb
+.DS_Store
