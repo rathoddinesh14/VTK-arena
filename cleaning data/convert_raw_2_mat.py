@@ -34,7 +34,7 @@ slice_0 = arr[:, :, 0]
 center = (slice_0.shape[0] // 2, slice_0.shape[1] // 2)
 print(center)
 
-radius = 91
+radius = 80
 
 for k in range(arr.shape[2]):
     # circular mask with radius = radius
@@ -61,3 +61,9 @@ for k in range(arr.shape[2]):
 my_var_dict = dict(volm=arr)
 filename = os.path.splitext(filename)[0]
 savemat(f'{filename}.mat', my_var_dict)
+
+# save in vtk format
+writer = sitk.ImageFileWriter()
+writer.SetFileName(f'{filename}.vtk')
+writer.SetImageIO("VTKImageIO")
+writer.Execute(sitk.GetImageFromArray(arr))

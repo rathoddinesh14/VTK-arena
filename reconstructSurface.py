@@ -67,7 +67,7 @@ stripper = vtk.vtkStripper()
 stripper.SetInputConnection(reverse.GetOutputPort())
 
 map = vtk.vtkPolyDataMapper()
-map.SetInputConnection(stripper.GetOutputPort())
+map.SetInputConnection(cf.GetOutputPort())
 map.ScalarVisibilityOff()
 
 surfaceActor = vtk.vtkActor()

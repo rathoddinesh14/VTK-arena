@@ -6,7 +6,7 @@ import sys
 import vtkmodules.vtkInteractionStyle
 # noinspection PyUnresolvedReferences
 import vtkmodules.vtkRenderingOpenGL2
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkRenderingCore import (
@@ -14,6 +14,9 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper,
     vtkRenderer
 )
+
+
+import settings_dialog
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -57,7 +60,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-
     window = MainWindow()
-
+    dialog = settings_dialog.SettingsDialog(window)
+    # non blocking dialog window
+    dialog.setWindowModality(QtCore.Qt.NonModal)
+    dialog.show()
     sys.exit(app.exec_())
