@@ -17,13 +17,13 @@ the UI can be updated. I tried this but ran into the error
 import sys
 from multiprocessing import Process, Queue, Pipe
 
-from PyQt5.QtCore import pyqtSignal, QThread
-from PyQt5.QtWidgets import QApplication, QLineEdit, QTextBrowser, QVBoxLayout, QDialog
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtWidgets import QApplication, QLineEdit, QTextBrowser, QVBoxLayout, QDialog, QProgressBar
 
 
 class Emitter(QThread):
     """ Emitter waits for data from the capitalization process and emits a signal for the UI to update its text. """
-    ui_data_available = pyqtSignal(str)  # Signal indicating new UI data is available.
+    ui_data_available = Signal(str)  # Signal indicating new UI data is available.
 
     def __init__(self, from_process: Pipe):
         super().__init__()
@@ -51,8 +51,12 @@ class ChildProc(Process):
     def run(self):
         """ Wait for a ui_data_available on the queue and send a capitalized version of the received string to the pipe. """
         while True:
-            text = self.data_from_mother.get()
-            self.to_emitter.send(text.upper())
+            # text = self.data_from_mother.get()
+            # self.to_emitter.send(text.upper())
+            for i in range(101):
+                import time
+                time.sleep(0.1)
+                self.to_emitter.send(str(i).encode('utf-8'))
 
 
 class Form(QDialog):
@@ -72,6 +76,16 @@ class Form(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(self.browser)
         layout.addWidget(self.lineedit)
+
+        # progressbars
+        self.progressbar = []
+        for i in range(2):
+            self.progressbar.append(QProgressBar())
+            self.progressbar[i].setValue(20)
+            self.progressbar[i].setMaximum(100)
+            self.progressbar[i].setMinimum(0)
+            layout.addWidget(self.progressbar[i])
+
         self.setLayout(layout)
         self.lineedit.setFocus()
         self.setWindowTitle('Upper')
@@ -92,7 +106,8 @@ class Form(QDialog):
 
     def updateUI(self, text):
         """ Add text to the lineedit box. """
-        self.browser.append(text)
+        # self.browser.append(text)
+        self.progressbar[0].setValue(int(text))
 
 
 if __name__ == '__main__':
