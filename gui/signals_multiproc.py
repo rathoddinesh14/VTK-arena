@@ -42,11 +42,12 @@ class Emitter(QThread):
 class ChildProc(Process):
     """ Process to capitalize a received string and return this over the pipe. """
 
-    def __init__(self, to_emitter: Pipe, from_mother: Queue, daemon=True):
+    def __init__(self, to_emitter: Pipe, from_mother: Queue, child_id, daemon=True):
         super().__init__()
         self.daemon = daemon
         self.to_emitter = to_emitter
         self.data_from_mother = from_mother
+        self.child_id = child_id
 
     def run(self):
         """ Wait for a ui_data_available on the queue and send a capitalized version of the received string to the pipe. """
@@ -55,8 +56,9 @@ class ChildProc(Process):
             # self.to_emitter.send(text.upper())
             for i in range(101):
                 import time
-                time.sleep(0.1)
-                self.to_emitter.send(str(i).encode('utf-8'))
+                time.sleep(0.1 * self.child_id)
+                msg = '{},{}'.format(self.child_id, i)
+                self.to_emitter.send(msg.encode('utf-8'))
 
 
 class Form(QDialog):
@@ -107,7 +109,8 @@ class Form(QDialog):
     def updateUI(self, text):
         """ Add text to the lineedit box. """
         # self.browser.append(text)
-        self.progressbar[0].setValue(int(text))
+        c_id, value = text.split(',')
+        self.progressbar[int(c_id)-1].setValue(int(value))
 
 
 if __name__ == '__main__':
@@ -120,11 +123,13 @@ if __name__ == '__main__':
 
     # Instantiate (i.e. create instances of) our classes.
     emitter = Emitter(mother_pipe)
-    child_process = ChildProc(child_pipe, queue)
+    child_process_1 = ChildProc(child_pipe, queue, 1)
+    child_process_2 = ChildProc(child_pipe, queue, 2)
     form = Form(queue, emitter)
 
     # Start our process.
-    child_process.start()
+    child_process_1.start()
+    child_process_2.start()
 
     # Show the qt GUI and wait for it to exit.
     form.show()
