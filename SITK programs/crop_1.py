@@ -18,25 +18,28 @@ def write_to_mhd(img, space, origin, direction, filename, point_cloud, left_boun
     npa = np.zeros((right_bound[0] - left_bound[0], right_bound[1] - left_bound[1], right_bound[2] - left_bound[2]), dtype=np.float32)
     # fill the array with the points in the point cloud
     for point in point_cloud:
-        npa[point[0] - left_bound[0], point[1] - left_bound[1], point[2] - left_bound[2]] = img[point[0], point[1], point[2]]
+        npa[point[0] - left_bound[0]-1, point[1] - left_bound[1]-1, point[2] - left_bound[2]-1] = img[point[0], point[1], point[2]]
 
-    print("Marked all points outside the point cloud as 0")
+    # print("Marked all points outside the point cloud as 0")
+
+    # traspose the array to get the correct orientation
+    npa = np.transpose(npa, (2, 1, 0))
 
     image = sitk.GetImageFromArray(npa)
 
     # crop the image
-    cropped_image = image[left_bound[0]:right_bound[0], left_bound[1]:right_bound[1], left_bound[2]:right_bound[2]]
+    # cropped_image = img[left_bound[0]:right_bound[0], left_bound[1]:right_bound[1], left_bound[2]:right_bound[2]]
     
-    cropped_image.SetSpacing(space)
-    cropped_image.SetOrigin(origin)
-    cropped_image.SetDirection(direction)
-    sitk.WriteImage(cropped_image, filename)
+    image.SetSpacing(space)
+    image.SetOrigin(origin)
+    image.SetDirection(direction)
+    sitk.WriteImage(image, filename)
 
-    return cropped_image
+    return image
 
 image_file_reader = sitk.ImageFileReader()
 # image_file_reader.SetFileName(sys.argv[1])
-image_file_reader.SetFileName("../data/chamf_distance_crop_downsampled_Dry_Deposition.mhd")
+image_file_reader.SetFileName("/home/rathod/Downloads/M.Tech Project Data/Outputs_05/chamf_distance_Steel.mhd")
 image_file_reader.SetImageIO('')
 
 image = image_file_reader.Execute()
@@ -48,23 +51,35 @@ print(image.GetDirection())
 print(image.GetPixelIDTypeAsString())
 print(image.GetMetaDataKeys())
 
-npa = sitk.GetArrayFromImage(image)
+# npa = sitk.GetArrayFromImage(image)
 
 
 point_cloud = []
-# sample 100 points from sphere with radius 10
-for x in range(0, 100):
-    for y in range(0, 100):
-        for z in range(0, 100):
-            if (x - 50) ** 2 + (y - 50) ** 2 + (z - 50) ** 2 < 50 ** 2:
+import vtk
+# grain_41586.vtp 
+reader = vtk.vtkXMLPolyDataReader()
+reader.SetFileName("data/grain_41586.vtp")
+reader.Update()
+polydata = reader.GetOutput()
+
+
+bounds = polydata.GetBounds()
+offset = 1
+left_bound = (int(bounds[0]) - offset, int(bounds[2]) - offset, int(bounds[4]) - offset)
+right_bound = (int(bounds[1]) + offset, int(bounds[3]) + offset, int(bounds[5]) + offset)
+
+points = polydata.GetPoints()
+for i in range(points.GetNumberOfPoints()):
+    point = points.GetPoint(i)
+    # body center coordinate is point
+    # add all corner points of the voxel to the point cloud
+    for x in range(int(point[0]), int(point[0]) + 2):
+        for y in range(int(point[1]), int(point[1]) + 2):
+            for z in range(int(point[2]), int(point[2]) + 2):
                 point_cloud.append((x, y, z))
-# print(point_cloud)
-
-left_bound = (0, 0, 0)
-right_bound = (100, 100, 100)
 
 
-cropped_image = write_to_mhd(image, image.GetSpacing(), (1,1,1), image.GetDirection(), 'new.mhd', point_cloud, left_bound, right_bound)
+cropped_image = write_to_mhd(image, image.GetSpacing(), left_bound, image.GetDirection(), 'new.mhd', point_cloud, left_bound, right_bound)
 
 print(cropped_image.GetSize())
 
