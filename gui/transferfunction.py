@@ -1,7 +1,26 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout
-from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QPainterPath
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
+from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QPainterPath, QLinearGradient, QColor
+from PySide6.QtCore import Qt, QPoint, QPointF
+import vtk
+import random
+import colormapdropdown
+import os
+
+def make_lut(table_size):
+    table = vtk.vtkLookupTable()
+    table.SetNumberOfTableValues(table_size)
+    table.SetTableRange(0, table_size)
+    table.Build()
+
+    nc = vtk.vtkNamedColors()
+
+    # Set the colors in the lookup table with random colors
+    for i in range(table_size):
+        table.SetTableValue(i, random.random(), random.random(), random.random(), 1.0)
+        # print(table.GetTableValue(i))
+
+    return table
 
 class TransferFunctionWidget(QWidget):
     def __init__(self, parent=None):
@@ -9,6 +28,8 @@ class TransferFunctionWidget(QWidget):
         self.setFixedSize(500, 500)
         self.points = []
         self.selected_point = None
+        # Load the vtk color map
+        self.lut = make_lut(256)
 
     def add_point(self, x, y):
         self.points.append(QPoint(x, y))
@@ -62,9 +83,15 @@ class TransferFunctionWidget(QWidget):
         path.lineTo(self.width(), self.height())
         path.closeSubpath()
 
-        painter.fillPath(path, QBrush(Qt.gray))
+        # Create the gradient
+        gradient = QLinearGradient(0, 0, self.width(), 0)
+        num_of_colors = self.lut.GetNumberOfTableValues()
+        for i in range(num_of_colors):
+            color = [0, 0, 0]
+            self.lut.GetColor(float(i)/num_of_colors, color)
+            gradient.setColorAt(float(i)/num_of_colors, QColor(color[0]*255, color[1]*255, color[2]*255))
 
-
+        painter.fillPath(path, QBrush(gradient))
 
     def mouseMoveEvent(self, event):
         if self.selected_point:
@@ -94,6 +121,10 @@ class TransferFunctionWidget(QWidget):
             self.selected_point.setY(curr_pos.y())
             self.update()
 
+    def update_cmap(self, cmap):
+        self.lut = cmap
+        self.update()
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -106,9 +137,21 @@ class MainWindow(QMainWindow):
         self.transfer_function_widget.add_point(500, 0)
 
         self.layout.addWidget(self.transfer_function_widget)
+        
+        base_loc = "/home/dinesh/Downloads/keycolormaps/KeyColormaps"
+        colormaps = []
+        for i in os.listdir(base_loc):
+            if i.endswith(".png"):
+                filename = i.split(".")[0]
+                colormaps.append(colormapdropdown.ColorMap(filename, 
+                                        os.path.join(base_loc, filename + ".xml"), 
+                                        os.path.join(base_loc, i)))
+
+        self.colormap_dropdown = colormapdropdown.ColormapChooserWidget(colormaps, 500, self.transfer_function_widget)
+        self.layout.addWidget(self.colormap_dropdown)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
