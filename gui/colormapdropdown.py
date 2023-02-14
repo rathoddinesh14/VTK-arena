@@ -44,10 +44,6 @@ class ColormapChooserWidget(QWidget):
     def get_colormap(self):
         tree = ET.parse(self.colormaps[self.colormap_dropdown.currentIndex()].file_loc)
         root = tree.getroot()
-
-        # <ColorMaps>
-            # <ColorMap space="Lab" indexedLookup="false" group="Interlinked" name="Yellow Orange 5 / Brown 9 / Blue 8">
-                # <Point x="0" o="1" r="0.301961" g="0.047059" b="0.090196"/>
         
         root = root.find("ColorMap")
 
@@ -55,13 +51,7 @@ class ColormapChooserWidget(QWidget):
         ctf.SetColorSpaceToDiverging()
 
         # Get the points
-        points = []
         for point in root.findall("Point"):
-            # points.append((float(point.attrib["x"]), 
-            #                float(point.attrib["r"]), 
-            #                float(point.attrib["g"]), 
-            #                float(point.attrib["b"])))
-        
             ctf.AddRGBPoint(float(point.attrib["x"]), 
                             float(point.attrib["r"]), 
                             float(point.attrib["g"]), 

@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QPainterPath, QLinearGradient, QColor
-from PySide6.QtCore import Qt, QPoint, QPointF
+from PySide6.QtCore import Qt, QPoint
 import vtk
 import random
 import colormapdropdown
@@ -25,7 +25,7 @@ def make_lut(table_size):
 class TransferFunctionWidget(QWidget):
     def __init__(self, parent=None):
         super(TransferFunctionWidget, self).__init__(parent)
-        self.setFixedSize(500, 500)
+        self.setFixedSize(parent.widget_width, parent.widget_height)
         self.points = []
         self.selected_point = None
         # Load the vtk color map
@@ -125,17 +125,16 @@ class TransferFunctionWidget(QWidget):
         self.lut = cmap
         self.update()
 
-class MainWindow(QMainWindow):
+class TransferFunctionWithColorMap(QWidget):
     def __init__(self, parent=None):
-        super(MainWindow, self).__init__(parent)
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout(self.central_widget)
+        super(TransferFunctionWithColorMap, self).__init__(parent)
+        self.widget_width = 500
+        self.widget_height = 500
+
+        self.layout = QVBoxLayout(self)
         self.transfer_function_widget = TransferFunctionWidget(self)
-
-        self.transfer_function_widget.add_point(0, 500)
-        self.transfer_function_widget.add_point(500, 0)
-
+        self.transfer_function_widget.add_point(0, self.widget_height)
+        self.transfer_function_widget.add_point(self.widget_width, 0)
         self.layout.addWidget(self.transfer_function_widget)
         
         base_loc = "/home/dinesh/Downloads/keycolormaps/KeyColormaps"
@@ -147,8 +146,20 @@ class MainWindow(QMainWindow):
                                         os.path.join(base_loc, filename + ".xml"), 
                                         os.path.join(base_loc, i)))
 
-        self.colormap_dropdown = colormapdropdown.ColormapChooserWidget(colormaps, 500, self.transfer_function_widget)
-        self.layout.addWidget(self.colormap_dropdown)
+        self.color_map_widget = colormapdropdown.ColormapChooserWidget(colormaps,
+                                                self.widget_width,
+                                                self.transfer_function_widget)
+        self.layout.addWidget(self.color_map_widget)
+
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
+        self.transfer_function_color_map = TransferFunctionWithColorMap(self)
+        self.layout.addWidget(self.transfer_function_color_map)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
