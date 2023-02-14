@@ -162,10 +162,23 @@ class TransferFunctionWidget(QWidget):
         self.lut = cmap
         self.update()
 
+    def set_control_points(self, points):
+        x1 = self.width() * points[0] / 100
+        x2 = self.width() * points[1] / 100
+        y1 = self.height() / 2
+        y2 = self.height() / 2
+        self.points = [ QPoint(0, self.height()),
+                        QPoint(x1, self.height()),
+                        QPoint(x1, y1),
+                        QPoint(x2, y2),
+                        QPoint(x2, self.height()),
+                        QPoint(self.width(), self.height())]
+        self.update()
 
 class RangeSlider(QWidget):
     def __init__(self, parent=None):
         super(RangeSlider, self).__init__(parent)
+        self.parent_widget : TransferFunctionWithColorMap = parent
         self.styled_range_hslider = QRangeSlider(Qt.Horizontal)
         self.styled_range_hslider.setValue((20, 80))
         self.styled_range_hslider.setStyleSheet(QSS)
@@ -201,6 +214,7 @@ class RangeSlider(QWidget):
         value = self.styled_range_hslider.value()
         self.label_left.setText(str(value[0]))
         self.label_right.setText(str(value[1]))
+        self.parent_widget.transfer_function_widget.set_control_points(value)
 
 class TransferFunctionWithColorMap(QWidget):
     def __init__(self, parent=None):
@@ -229,10 +243,12 @@ class TransferFunctionWithColorMap(QWidget):
         self.layout.addWidget(self.color_map_widget)
 
         # add reset button
-        self.reset_button = QPushButton("Reset")
+        self.reset_button = QPushButton("Reset Transfer Function")
+        self.reset_button.setFixedWidth(200)
+        # align to center of the widget
         self.reset_button.clicked.connect(self.reset)
 
-        self.layout.addWidget(self.reset_button)
+        self.layout.addWidget(self.reset_button, alignment=Qt.AlignCenter)
 
         self.styled_range_hslider = RangeSlider(self)
         self.layout.addWidget(self.styled_range_hslider)
