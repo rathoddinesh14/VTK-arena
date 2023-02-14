@@ -1,11 +1,48 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
-from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, QPainterPath, QLinearGradient, QColor
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget,\
+    QVBoxLayout, QPushButton, QLabel, QSlider, QHBoxLayout
+from PySide6.QtGui import QPainter, QBrush, QPen, QPolygonF, \
+    QPainterPath, QLinearGradient, QColor
 from PySide6.QtCore import Qt, QPoint
 import vtk
 import random
 import colormapdropdown
 import os
+
+from qtrangeslider import QRangeSlider
+
+QSS = """
+QSlider {
+    min-height: 20px;
+}
+
+QSlider::groove:horizontal {
+    border: 0px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+    height: 20px;
+    border-radius: 10px;
+}
+
+QSlider::handle {
+    background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                fy:0.3, stop:0 #eef, stop:1 #002);
+    height: 20px;
+    width: 20px;
+    border-radius: 10px;
+}
+
+QSlider::sub-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+QRangeSlider {
+    qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+}
+"""
+
+
 
 def make_lut(table_size):
     table = vtk.vtkLookupTable()
@@ -125,6 +162,46 @@ class TransferFunctionWidget(QWidget):
         self.lut = cmap
         self.update()
 
+
+class RangeSlider(QWidget):
+    def __init__(self, parent=None):
+        super(RangeSlider, self).__init__(parent)
+        self.styled_range_hslider = QRangeSlider(Qt.Horizontal)
+        self.styled_range_hslider.setValue((20, 80))
+        self.styled_range_hslider.setStyleSheet(QSS)
+
+        # create labels
+        self.label_left = QLabel("0", self)
+        self.label_right = QLabel("100", self)
+        self.label_min = QLabel("Min", self)
+        self.label_max = QLabel("Max", self)
+
+        # create layout
+        hbox1 = QHBoxLayout()
+        hbox1.addWidget(self.label_left)
+        hbox1.addStretch(1)
+        hbox1.addWidget(self.label_right)
+
+        hbox2 = QHBoxLayout()
+        hbox2.addWidget(self.label_min)
+        hbox2.addStretch(1)
+        hbox2.addWidget(self.label_max)
+
+        vbox = QVBoxLayout(self)
+        vbox.addLayout(hbox1)
+        vbox.addWidget(self.styled_range_hslider)
+        vbox.addLayout(hbox2)
+
+        # on slider value change
+        self.styled_range_hslider.valueChanged.connect(self.on_slider_value_change)
+
+        self.layout = vbox
+
+    def on_slider_value_change(self, value):
+        value = self.styled_range_hslider.value()
+        self.label_left.setText(str(value[0]))
+        self.label_right.setText(str(value[1]))
+
 class TransferFunctionWithColorMap(QWidget):
     def __init__(self, parent=None):
         super(TransferFunctionWithColorMap, self).__init__(parent)
@@ -150,6 +227,21 @@ class TransferFunctionWithColorMap(QWidget):
                                                 self.widget_width,
                                                 self.transfer_function_widget)
         self.layout.addWidget(self.color_map_widget)
+
+        # add reset button
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.clicked.connect(self.reset)
+
+        self.layout.addWidget(self.reset_button)
+
+        self.styled_range_hslider = RangeSlider(self)
+        self.layout.addWidget(self.styled_range_hslider)
+
+    def reset(self):
+        self.transfer_function_widget.points = []
+        self.transfer_function_widget.add_point(0, self.widget_height)
+        self.transfer_function_widget.add_point(self.widget_width, 0)
+        self.transfer_function_widget.update()
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
