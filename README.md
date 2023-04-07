@@ -9,3 +9,4 @@
 ### 5. [Check point present inside a mesh](pointwithinmesh.py) : Check if a point is inside a mesh
 ### 6. [t-SNE](t-SNE) : t-SNE
 ### 7. [Export Scene](export%20scene) : Export scene to image
+### 8. [Recommendation System](recommendation%20system) : Recommendation system (Collaborative Filtering)
